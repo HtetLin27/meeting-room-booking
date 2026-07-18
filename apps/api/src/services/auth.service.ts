@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../errors/app-error.js";
+import { env } from "../config/env.js";
 
 
 export const login = async (
@@ -28,7 +29,7 @@ if (!user) {
       "Invalid email or password"
     );
  }
- const jwtSecret = process.env.JWT_SECRET;
+ const jwtSecret = env.JWT_SECRET;
 
  if (!jwtSecret) {
    throw new Error("JWT_SECRET is not defined");
@@ -44,4 +45,27 @@ if (!user) {
     },
     token
  }
+};
+
+export const getCurrentUser = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new AppError(
+      404,
+      "USER_NOT_FOUND",
+      "User not found"
+    );
+  }
+
+  return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
 };
