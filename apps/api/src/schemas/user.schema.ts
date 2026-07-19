@@ -22,10 +22,6 @@ export const updateUserRoleSchema = z.object({
   role: z.enum(Role),
 });
 
-export type CreateUserInput = z.infer<
-  typeof createUserSchema
->;
+export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-export type UpdateUserRoleInput = z.infer<
-  typeof updateUserRoleSchema
->;
+export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;

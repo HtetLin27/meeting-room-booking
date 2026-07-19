@@ -3,7 +3,6 @@ import { AppError } from "../errors/app-error.js";
 import type { CreateBookingInput } from "../schemas/booking.schema.js";
 import type { Role } from "../generated/prisma/client.js";
 
-
 const MAX_BOOKING_DURATION_MS = 8 * 60 * 60 * 1000;
 
 export const createBooking = async (
@@ -65,32 +64,32 @@ export const createBooking = async (
 
   // 5. Create booking
   const booking = await prisma.booking.create({
-  data: {
-    title: input.title,
-    ...(input.notes !== undefined && {
-      notes: input.notes,
-    }),
-    startTime,
-    endTime,
-    userId,
-  },
-  select: {
-    id: true,
-    title: true,
-    notes: true,
-    startTime: true,
-    endTime: true,
-    createdAt: true,
-    user: {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
+    data: {
+      title: input.title,
+      ...(input.notes !== undefined && {
+        notes: input.notes,
+      }),
+      startTime,
+      endTime,
+      userId,
+    },
+    select: {
+      id: true,
+      title: true,
+      notes: true,
+      startTime: true,
+      endTime: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
       },
     },
-  },
- });
+  });
 
   return booking;
 };
@@ -121,7 +120,6 @@ export const getAllBookings = async () => {
   return bookings;
 };
 
-
 export const deleteBooking = async (
   bookingId: string,
   currentUserId: string,
@@ -134,18 +132,13 @@ export const deleteBooking = async (
   });
 
   if (!booking) {
-    throw new AppError(
-      404,
-      "BOOKING_NOT_FOUND",
-      "Booking not found"
-    );
+    throw new AppError(404, "BOOKING_NOT_FOUND", "Booking not found");
   }
 
   const isOwnerOfBooking = booking.userId === currentUserId;
 
   const canDeleteAnyBooking =
-    currentUserRole === "ADMIN" ||
-    currentUserRole === "OWNER";
+    currentUserRole === "ADMIN" || currentUserRole === "OWNER";
 
   if (!isOwnerOfBooking && !canDeleteAnyBooking) {
     throw new AppError(

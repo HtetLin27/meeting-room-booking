@@ -1,25 +1,16 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Role } from "../generated/prisma/client.js";
 
 // Create mock functions
-const {
-  findFirstMock,
-  findUniqueMock,
-  createMock,
-  deleteMock,
-} = vi.hoisted(() => ({
-  findFirstMock: vi.fn(),
-  findUniqueMock: vi.fn(),
-  createMock: vi.fn(),
-  deleteMock: vi.fn(),
-}));
+const { findFirstMock, findUniqueMock, createMock, deleteMock } = vi.hoisted(
+  () => ({
+    findFirstMock: vi.fn(),
+    findUniqueMock: vi.fn(),
+    createMock: vi.fn(),
+    deleteMock: vi.fn(),
+  })
+);
 
 // Mock Prisma
 vi.mock("../lib/prisma.js", () => ({
@@ -33,10 +24,7 @@ vi.mock("../lib/prisma.js", () => ({
   },
 }));
 
-import {
-  createBooking,
-  deleteBooking,
-} from "./booking.service.js";
+import { createBooking, deleteBooking } from "./booking.service.js";
 
 describe("createBooking", () => {
   beforeEach(() => {
@@ -50,9 +38,7 @@ describe("createBooking", () => {
       endTime: "2026-07-25T10:00:00.000Z",
     };
 
-    await expect(
-      createBooking("user-id", input)
-    ).rejects.toMatchObject({
+    await expect(createBooking("user-id", input)).rejects.toMatchObject({
       statusCode: 400,
       code: "INVALID_BOOKING_TIME",
     });
@@ -62,13 +48,9 @@ describe("createBooking", () => {
   });
 
   it("should reject a booking in the past", async () => {
-    const startTime = new Date(
-      Date.now() - 60 * 60 * 1000
-    );
+    const startTime = new Date(Date.now() - 60 * 60 * 1000);
 
-    const endTime = new Date(
-      Date.now() + 60 * 60 * 1000
-    );
+    const endTime = new Date(Date.now() + 60 * 60 * 1000);
 
     const input = {
       title: "Past Meeting",
@@ -76,9 +58,7 @@ describe("createBooking", () => {
       endTime: endTime.toISOString(),
     };
 
-    await expect(
-      createBooking("user-id", input)
-    ).rejects.toMatchObject({
+    await expect(createBooking("user-id", input)).rejects.toMatchObject({
       statusCode: 400,
       code: "BOOKING_IN_PAST",
     });
@@ -88,13 +68,9 @@ describe("createBooking", () => {
   });
 
   it("should reject bookings longer than 8 hours", async () => {
-    const startTime = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    );
+    const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const endTime = new Date(
-      startTime.getTime() + 9 * 60 * 60 * 1000
-    );
+    const endTime = new Date(startTime.getTime() + 9 * 60 * 60 * 1000);
 
     const input = {
       title: "Long Meeting",
@@ -102,9 +78,7 @@ describe("createBooking", () => {
       endTime: endTime.toISOString(),
     };
 
-    await expect(
-      createBooking("user-id", input)
-    ).rejects.toMatchObject({
+    await expect(createBooking("user-id", input)).rejects.toMatchObject({
       statusCode: 400,
       code: "BOOKING_DURATION_EXCEEDED",
     });
@@ -114,13 +88,9 @@ describe("createBooking", () => {
   });
 
   it("should reject an overlapping booking", async () => {
-    const startTime = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    );
+    const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const endTime = new Date(
-      startTime.getTime() + 60 * 60 * 1000
-    );
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
     findFirstMock.mockResolvedValue({
       id: "existing-booking-id",
@@ -132,9 +102,7 @@ describe("createBooking", () => {
       endTime: endTime.toISOString(),
     };
 
-    await expect(
-      createBooking("user-id", input)
-    ).rejects.toMatchObject({
+    await expect(createBooking("user-id", input)).rejects.toMatchObject({
       statusCode: 409,
       code: "BOOKING_OVERLAP",
     });
@@ -143,13 +111,9 @@ describe("createBooking", () => {
   });
 
   it("should create a valid booking", async () => {
-    const startTime = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    );
+    const startTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const endTime = new Date(
-      startTime.getTime() + 60 * 60 * 1000
-    );
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
     findFirstMock.mockResolvedValue(null);
 
@@ -176,10 +140,7 @@ describe("createBooking", () => {
       endTime: endTime.toISOString(),
     };
 
-    const result = await createBooking(
-      "user-id",
-      input
-    );
+    const result = await createBooking("user-id", input);
 
     expect(findFirstMock).toHaveBeenCalledWith({
       where: {
@@ -207,11 +168,7 @@ describe("deleteBooking", () => {
     findUniqueMock.mockResolvedValue(null);
 
     await expect(
-      deleteBooking(
-        "booking-id",
-        "user-id",
-        Role.USER
-      )
+      deleteBooking("booking-id", "user-id", Role.USER)
     ).rejects.toMatchObject({
       statusCode: 404,
       code: "BOOKING_NOT_FOUND",
@@ -230,11 +187,7 @@ describe("deleteBooking", () => {
       id: "booking-id",
     });
 
-    await deleteBooking(
-      "booking-id",
-      "user-id",
-      Role.USER
-    );
+    await deleteBooking("booking-id", "user-id", Role.USER);
 
     expect(deleteMock).toHaveBeenCalledWith({
       where: {
@@ -250,11 +203,7 @@ describe("deleteBooking", () => {
     });
 
     await expect(
-      deleteBooking(
-        "booking-id",
-        "user-id",
-        Role.USER
-      )
+      deleteBooking("booking-id", "user-id", Role.USER)
     ).rejects.toMatchObject({
       statusCode: 403,
       code: "FORBIDDEN",
@@ -273,11 +222,7 @@ describe("deleteBooking", () => {
       id: "booking-id",
     });
 
-    await deleteBooking(
-      "booking-id",
-      "owner-id",
-      Role.OWNER
-    );
+    await deleteBooking("booking-id", "owner-id", Role.OWNER);
 
     expect(deleteMock).toHaveBeenCalledWith({
       where: {
@@ -296,11 +241,7 @@ describe("deleteBooking", () => {
       id: "booking-id",
     });
 
-    await deleteBooking(
-      "booking-id",
-      "admin-id",
-      Role.ADMIN
-    );
+    await deleteBooking("booking-id", "admin-id", Role.ADMIN);
 
     expect(deleteMock).toHaveBeenCalledWith({
       where: {

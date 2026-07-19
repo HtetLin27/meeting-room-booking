@@ -56,11 +56,7 @@ export const updateUserRoleController = async (
     const { id } = req.params;
 
     if (typeof id !== "string") {
-      throw new AppError(
-        400,
-        "USER_ID_REQUIRED",
-        "User id is required"
-      );
+      throw new AppError(400, "USER_ID_REQUIRED", "User id is required");
     }
 
     const user = await updateUserRole(id, req.body);
@@ -84,11 +80,7 @@ export const deleteUserController = async (
     const { id } = req.params;
 
     if (typeof id !== "string") {
-      throw new AppError(
-        400,
-        "USER_ID_REQUIRED",
-        "User id is required"
-      );
+      throw new AppError(400, "USER_ID_REQUIRED", "User id is required");
     }
 
     await deleteUser(id);

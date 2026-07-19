@@ -1,18 +1,9 @@
 import request from "supertest";
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppError } from "./errors/app-error.js";
 
-const {
-  loginMock,
-  getCurrentUserMock,
-} = vi.hoisted(() => ({
+const { loginMock, getCurrentUserMock } = vi.hoisted(() => ({
   loginMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
 }));
@@ -30,9 +21,7 @@ describe("GET /health", () => {
   });
 
   it("should return API health status", async () => {
-    const response = await request(app)
-      .get("/health")
-      .expect(200);
+    const response = await request(app).get("/health").expect(200);
 
     expect(response.body).toEqual({
       success: true,
@@ -65,10 +54,7 @@ describe("POST /api/auth/login", () => {
       })
       .expect(200);
 
-    expect(loginMock).toHaveBeenCalledWith(
-      "admin@example.com",
-      "Password123!"
-    );
+    expect(loginMock).toHaveBeenCalledWith("admin@example.com", "Password123!");
 
     expect(response.body).toEqual({
       success: true,
@@ -83,22 +69,29 @@ describe("POST /api/auth/login", () => {
       },
     });
 
-    const cookies = response.headers["set-cookie"];
+    const setCookieHeader = response.headers["set-cookie"];
 
-    expect(cookies).toBeDefined();
-    expect(cookies[0]).toContain(
-      "token=test-jwt-token"
-    );
-    expect(cookies[0]).toContain("HttpOnly");
+    expect(setCookieHeader).toBeDefined();
+
+    const cookies = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : [setCookieHeader];
+
+    const [firstCookie] = cookies;
+
+    if (typeof firstCookie !== "string") {
+      throw new Error(
+        "Expected set-cookie header to include at least one cookie"
+      );
+    }
+
+    expect(firstCookie).toContain("token=test-jwt-token");
+    expect(firstCookie).toContain("HttpOnly");
   });
 
   it("should return 401 for invalid credentials", async () => {
     loginMock.mockRejectedValue(
-      new AppError(
-        401,
-        "INVALID_CREDENTIALS",
-        "Invalid email or password"
-      )
+      new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password")
     );
 
     const response = await request(app)
@@ -128,9 +121,7 @@ describe("POST /api/auth/login", () => {
       .expect(400);
 
     expect(response.body.success).toBe(false);
-    expect(response.body.error.code).toBe(
-      "VALIDATION_ERROR"
-    );
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
 
     expect(loginMock).not.toHaveBeenCalled();
   });

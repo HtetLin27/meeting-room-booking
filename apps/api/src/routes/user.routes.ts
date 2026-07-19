@@ -21,11 +21,7 @@ router.use(authorize(Role.ADMIN));
 
 router.get("/", getAllUsersController);
 
-router.post(
-  "/",
-  validate(createUserSchema),
-  createUserController
-);
+router.post("/", validate(createUserSchema), createUserController);
 
 router.patch(
   "/:id/role",
@@ -33,9 +29,6 @@ router.patch(
   updateUserRoleController
 );
 
-router.delete(
-  "/:id",
-  deleteUserController
-);
+router.delete("/:id", deleteUserController);
 
 export default router;

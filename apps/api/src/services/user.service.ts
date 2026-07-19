@@ -4,7 +4,6 @@ import { AppError } from "../errors/app-error.js";
 import type { CreateUserInput } from "../schemas/user.schema.js";
 import type { UpdateUserRoleInput } from "../schemas/user.schema.js";
 
-
 export const createUser = async (input: CreateUserInput) => {
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -71,11 +70,7 @@ export const updateUserRole = async (
   });
 
   if (!user) {
-    throw new AppError(
-      404,
-      "USER_NOT_FOUND",
-      "User not found"
-    );
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
   }
 
   // Prevent changing the last ADMIN to another role
@@ -123,11 +118,7 @@ export const deleteUser = async (userId: string) => {
   });
 
   if (!user) {
-    throw new AppError(
-      404,
-      "USER_NOT_FOUND",
-      "User not found"
-    );
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
   }
 
   // Prevent deleting the last ADMIN

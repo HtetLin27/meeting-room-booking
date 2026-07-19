@@ -9,7 +9,6 @@ import bookingRoutes from "./routes/booking.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 
-
 const app: Express = express();
 app.use(helmet());
 
@@ -30,13 +29,11 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use('/api/auth',authRoutes)
+app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reports", reportRoutes);
 
 app.use(errorMiddleware);
-
-
 
 export default app;

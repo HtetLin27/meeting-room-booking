@@ -1,5 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { createBooking, getAllBookings, deleteBooking } from "../services/booking.service.js";
+import {
+  createBooking,
+  getAllBookings,
+  deleteBooking,
+} from "../services/booking.service.js";
 import { AppError } from "../errors/app-error.js";
 
 export const createBookingController = async (
@@ -9,17 +13,10 @@ export const createBookingController = async (
 ) => {
   try {
     if (!req.user) {
-      throw new AppError(
-        401,
-        "UNAUTHORIZED",
-        "Authentication required"
-      );
+      throw new AppError(401, "UNAUTHORIZED", "Authentication required");
     }
 
-    const booking = await createBooking(
-      req.user.id,
-      req.body
-    );
+    const booking = await createBooking(req.user.id, req.body);
 
     return res.status(201).json({
       success: true,
@@ -53,7 +50,6 @@ export const getAllBookingsController = async (
   }
 };
 
-
 export const deleteBookingController = async (
   req: Request,
   res: Response,
@@ -61,28 +57,16 @@ export const deleteBookingController = async (
 ) => {
   try {
     if (!req.user) {
-      throw new AppError(
-        401,
-        "UNAUTHORIZED",
-        "Authentication required"
-      );
+      throw new AppError(401, "UNAUTHORIZED", "Authentication required");
     }
 
     const { id } = req.params;
 
     if (typeof id !== "string") {
-      throw new AppError(
-        400,
-        "INVALID_BOOKING_ID",
-        "Booking id is required"
-      );
+      throw new AppError(400, "INVALID_BOOKING_ID", "Booking id is required");
     }
 
-    await deleteBooking(
-      id,
-      req.user.id,
-      req.user.role
-    );
+    await deleteBooking(id, req.user.id, req.user.role);
 
     return res.status(200).json({
       success: true,

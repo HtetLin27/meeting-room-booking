@@ -1,0 +1,30 @@
+import { useQuery } from "@tanstack/react-query";
+import { Navigate, Outlet } from "react-router";
+
+import { getCurrentUser } from "@/api/auth.api";
+
+export function ProtectedRoute() {
+  const {
+    data: user,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: getCurrentUser,
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (isError || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+}

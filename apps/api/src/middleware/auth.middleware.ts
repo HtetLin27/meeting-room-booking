@@ -31,21 +31,13 @@ export const authenticate = (
   const token = req.cookies?.token;
 
   if (!token) {
-    return next(
-      new AppError(
-        401,
-        "UNAUTHORIZED",
-        "Authentication required"
-      )
-    );
+    return next(new AppError(401, "UNAUTHORIZED", "Authentication required"));
   }
 
   const jwtSecret = env.JWT_SECRET;
 
   if (!jwtSecret) {
-    return next(
-      new Error("JWT_SECRET is not defined")
-    );
+    return next(new Error("JWT_SECRET is not defined"));
   }
 
   try {
@@ -53,11 +45,7 @@ export const authenticate = (
 
     if (!isAuthTokenPayload(decoded)) {
       return next(
-        new AppError(
-          401,
-          "UNAUTHORIZED",
-          "Invalid authentication token"
-        )
+        new AppError(401, "UNAUTHORIZED", "Invalid authentication token")
       );
     }
 
@@ -68,12 +56,6 @@ export const authenticate = (
 
     return next();
   } catch {
-    return next(
-      new AppError(
-        401,
-        "UNAUTHORIZED",
-        "Invalid or expired token"
-      )
-    );
+    return next(new AppError(401, "UNAUTHORIZED", "Invalid or expired token"));
   }
 };

@@ -1,10 +1,4 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Role } from "../generated/prisma/client.js";
 
@@ -45,11 +39,7 @@ vi.mock("bcryptjs", () => ({
   },
 }));
 
-import {
-  createUser,
-  deleteUser,
-  updateUserRole,
-} from "./user.service.js";
+import { createUser, deleteUser, updateUserRole } from "./user.service.js";
 
 describe("createUser", () => {
   beforeEach(() => {
@@ -87,10 +77,7 @@ describe("createUser", () => {
       },
     });
 
-    expect(hashMock).toHaveBeenCalledWith(
-      "Password123!",
-      12
-    );
+    expect(hashMock).toHaveBeenCalledWith("Password123!", 12);
 
     expect(createMock).toHaveBeenCalledWith({
       data: {
@@ -125,9 +112,7 @@ describe("createUser", () => {
       role: Role.USER,
     };
 
-    await expect(
-      createUser(input)
-    ).rejects.toMatchObject({
+    await expect(createUser(input)).rejects.toMatchObject({
       statusCode: 409,
       code: "EMAIL_ALREADY_EXISTS",
     });
@@ -161,12 +146,9 @@ describe("updateUserRole", () => {
 
     updateMock.mockResolvedValue(updatedUser);
 
-    const result = await updateUserRole(
-      "user-id",
-      {
-        role: Role.OWNER,
-      }
-    );
+    const result = await updateUserRole("user-id", {
+      role: Role.OWNER,
+    });
 
     expect(updateMock).toHaveBeenCalledWith({
       where: {
@@ -199,12 +181,9 @@ describe("updateUserRole", () => {
     countMock.mockResolvedValue(1);
 
     await expect(
-      updateUserRole(
-        "admin-id",
-        {
-          role: Role.USER,
-        }
-      )
+      updateUserRole("admin-id", {
+        role: Role.USER,
+      })
     ).rejects.toMatchObject({
       statusCode: 409,
       code: "LAST_ADMIN_REQUIRED",
@@ -240,12 +219,9 @@ describe("updateUserRole", () => {
 
     updateMock.mockResolvedValue(updatedUser);
 
-    const result = await updateUserRole(
-      "admin-id",
-      {
-        role: Role.USER,
-      }
-    );
+    const result = await updateUserRole("admin-id", {
+      role: Role.USER,
+    });
 
     expect(updateMock).toHaveBeenCalled();
 
@@ -289,9 +265,7 @@ describe("deleteUser", () => {
 
     countMock.mockResolvedValue(1);
 
-    await expect(
-      deleteUser("admin-id")
-    ).rejects.toMatchObject({
+    await expect(deleteUser("admin-id")).rejects.toMatchObject({
       statusCode: 409,
       code: "LAST_ADMIN_REQUIRED",
     });
@@ -325,9 +299,7 @@ describe("deleteUser", () => {
   it("should return 404 when deleting a user that does not exist", async () => {
     findUniqueMock.mockResolvedValue(null);
 
-    await expect(
-      deleteUser("missing-user-id")
-    ).rejects.toMatchObject({
+    await expect(deleteUser("missing-user-id")).rejects.toMatchObject({
       statusCode: 404,
       code: "USER_NOT_FOUND",
     });
