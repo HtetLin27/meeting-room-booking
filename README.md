@@ -54,6 +54,7 @@ All seeded demo accounts use the same password.
 - Delete users
 - Prevent deleting the last Admin
 - Prevent downgrading the last Admin
+- Deleting a user also deletes all bookings owned by that user
 
 ### Reports
 
@@ -96,7 +97,7 @@ Backend booking validation enforces:
 - Identical time ranges are rejected
 - Partial overlaps are rejected
 - Contained overlaps are rejected
-- Back-to-back bookings are allowed
+- Back-to-back bookings are allowed. A booking can start exactly when another booking ends.
 - Cross-day bookings are allowed if duration is within the limit
 - Times are stored/transmitted consistently using UTC ISO timestamps
 - Frontend displays dates and times in the browser's local timezone

@@ -37,7 +37,7 @@ export function canDeleteBooking(booking: Booking, currentUser: AuthUser) {
   return (
     currentUser.role === "ADMIN" ||
     currentUser.role === "OWNER" ||
-    booking.user.id === currentUser.id
+    booking.userId === currentUser.id
   );
 }
 
@@ -85,10 +85,9 @@ export function formatLocalDateValue(date: Date) {
 }
 
 export function formatLocalTimeValue(date: Date) {
-  return [
-    padDatePart(date.getHours()),
-    padDatePart(date.getMinutes()),
-  ].join(":");
+  return [padDatePart(date.getHours()), padDatePart(date.getMinutes())].join(
+    ":"
+  );
 }
 
 export function formatLocalDateTimeValue(date: Date) {
@@ -111,11 +110,7 @@ export function combineLocalDateAndTime(dateValue: string, timeValue: string) {
 
 export function getDefaultBookingDateTimes(baseDate = new Date()) {
   const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const selectedDay = new Date(
     baseDate.getFullYear(),
     baseDate.getMonth(),

@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Role } from "../generated/prisma/client.js";
 
 // Create mock functions
-const { findFirstMock, findUniqueMock, createMock, deleteMock } = vi.hoisted(
-  () => ({
+const { findFirstMock, findUniqueMock, findManyMock, createMock, deleteMock } =
+  vi.hoisted(() => ({
     findFirstMock: vi.fn(),
     findUniqueMock: vi.fn(),
+    findManyMock: vi.fn(),
     createMock: vi.fn(),
     deleteMock: vi.fn(),
-  })
-);
+  }));
 
 // Mock Prisma
 vi.mock("../lib/prisma.js", () => ({
@@ -18,13 +18,18 @@ vi.mock("../lib/prisma.js", () => ({
     booking: {
       findFirst: findFirstMock,
       findUnique: findUniqueMock,
+      findMany: findManyMock,
       create: createMock,
       delete: deleteMock,
     },
   },
 }));
 
-import { createBooking, deleteBooking } from "./booking.service.js";
+import {
+  createBooking,
+  deleteBooking,
+  getAllBookings,
+} from "./booking.service.js";
 
 describe("createBooking", () => {
   beforeEach(() => {
@@ -119,6 +124,7 @@ describe("createBooking", () => {
 
     const createdBooking = {
       id: "booking-id",
+      userId: "user-id",
       title: "Team Meeting",
       notes: null,
       startTime,
@@ -153,9 +159,86 @@ describe("createBooking", () => {
       },
     });
 
-    expect(createMock).toHaveBeenCalled();
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        title: "Team Meeting",
+        startTime,
+        endTime,
+        userId: "user-id",
+      },
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        notes: true,
+        startTime: true,
+        endTime: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
 
     expect(result).toEqual(createdBooking);
+  });
+});
+
+describe("getAllBookings", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return bookings with userId and nested user details", async () => {
+    const booking = {
+      id: "booking-id",
+      userId: "user-id",
+      title: "Team Meeting",
+      notes: null,
+      startTime: new Date(),
+      endTime: new Date(),
+      createdAt: new Date(),
+      user: {
+        id: "user-id",
+        name: "User",
+        email: "user@example.com",
+        role: Role.USER,
+      },
+    };
+
+    findManyMock.mockResolvedValue([booking]);
+
+    const result = await getAllBookings();
+
+    expect(findManyMock).toHaveBeenCalledWith({
+      orderBy: {
+        startTime: "asc",
+      },
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        notes: true,
+        startTime: true,
+        endTime: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual([booking]);
   });
 });
 

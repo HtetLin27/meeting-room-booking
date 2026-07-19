@@ -97,9 +97,7 @@ function DatePickerControl({
         >
           <CalendarIcon className="size-4 shrink-0 text-[#667085]" />
           <span className="min-w-0 flex-1 truncate">
-            {selectedDate
-              ? format(selectedDate, "MMM d, yyyy")
-              : "Select date"}
+            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Select date"}
           </span>
           <ChevronDown className="size-4 shrink-0 text-[#667085]" />
         </PopoverTrigger>
@@ -264,9 +262,7 @@ export function CreateBookingForm({
               />
 
               {errors.endTime && (
-                <p className="text-xs text-red-600">
-                  {errors.endTime.message}
-                </p>
+                <p className="text-xs text-red-600">{errors.endTime.message}</p>
               )}
             </div>
           </div>

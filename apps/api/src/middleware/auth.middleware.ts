@@ -2,12 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
 
-import { Role } from "../generated/prisma/client.js";
 import { AppError } from "../errors/app-error.js";
+import { prisma } from "../lib/prisma.js";
 
 interface AuthTokenPayload extends JwtPayload {
   id: string;
-  role: Role;
 }
 
 const isAuthTokenPayload = (
@@ -17,13 +16,10 @@ const isAuthTokenPayload = (
     return false;
   }
 
-  return (
-    typeof payload.id === "string" &&
-    Object.values(Role).includes(payload.role as Role)
-  );
+  return typeof payload.id === "string";
 };
 
-export const authenticate = (
+export const authenticate = async (
   req: Request,
   _res: Response,
   next: NextFunction
@@ -40,22 +36,39 @@ export const authenticate = (
     return next(new Error("JWT_SECRET is not defined"));
   }
 
+  let decoded: string | JwtPayload;
+
   try {
-    const decoded = jwt.verify(token, jwtSecret);
-
-    if (!isAuthTokenPayload(decoded)) {
-      return next(
-        new AppError(401, "UNAUTHORIZED", "Invalid authentication token")
-      );
-    }
-
-    req.user = {
-      id: decoded.id,
-      role: decoded.role,
-    };
-
-    return next();
+    decoded = jwt.verify(token, jwtSecret);
   } catch {
     return next(new AppError(401, "UNAUTHORIZED", "Invalid or expired token"));
+  }
+
+  if (!isAuthTokenPayload(decoded)) {
+    return next(
+      new AppError(401, "UNAUTHORIZED", "Invalid authentication token")
+    );
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.id,
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      return next(new AppError(401, "UNAUTHORIZED", "Authentication required"));
+    }
+
+    req.user = user;
+
+    return next();
+  } catch (error) {
+    return next(error);
   }
 };

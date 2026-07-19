@@ -146,9 +146,13 @@ describe("updateUserRole", () => {
 
     updateMock.mockResolvedValue(updatedUser);
 
-    const result = await updateUserRole("user-id", {
-      role: Role.OWNER,
-    });
+    const result = await updateUserRole(
+      "user-id",
+      {
+        role: Role.OWNER,
+      },
+      "admin-id"
+    );
 
     expect(updateMock).toHaveBeenCalledWith({
       where: {
@@ -181,9 +185,13 @@ describe("updateUserRole", () => {
     countMock.mockResolvedValue(1);
 
     await expect(
-      updateUserRole("admin-id", {
-        role: Role.USER,
-      })
+      updateUserRole(
+        "admin-id",
+        {
+          role: Role.USER,
+        },
+        "another-admin-id"
+      )
     ).rejects.toMatchObject({
       statusCode: 409,
       code: "LAST_ADMIN_REQUIRED",
@@ -198,9 +206,34 @@ describe("updateUserRole", () => {
     expect(updateMock).not.toHaveBeenCalled();
   });
 
-  it("should allow changing an ADMIN role when another ADMIN exists", async () => {
+  it("should reject changing the authenticated ADMIN's own role", async () => {
     findUniqueMock.mockResolvedValue({
-      id: "admin-id",
+      id: "admin-1",
+      name: "Admin",
+      email: "admin@example.com",
+      role: Role.ADMIN,
+    });
+
+    await expect(
+      updateUserRole(
+        "admin-1",
+        {
+          role: Role.USER,
+        },
+        "admin-1"
+      )
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      code: "CANNOT_CHANGE_OWN_ROLE",
+    });
+
+    expect(countMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("should allow changing another ADMIN role when multiple ADMINs exist", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "admin-2",
       name: "Admin",
       email: "admin@example.com",
       role: Role.ADMIN,
@@ -209,7 +242,7 @@ describe("updateUserRole", () => {
     countMock.mockResolvedValue(2);
 
     const updatedUser = {
-      id: "admin-id",
+      id: "admin-2",
       name: "Admin",
       email: "admin@example.com",
       role: Role.USER,
@@ -219,8 +252,18 @@ describe("updateUserRole", () => {
 
     updateMock.mockResolvedValue(updatedUser);
 
-    const result = await updateUserRole("admin-id", {
-      role: Role.USER,
+    const result = await updateUserRole(
+      "admin-2",
+      {
+        role: Role.USER,
+      },
+      "admin-1"
+    );
+
+    expect(countMock).toHaveBeenCalledWith({
+      where: {
+        role: "ADMIN",
+      },
     });
 
     expect(updateMock).toHaveBeenCalled();
@@ -246,7 +289,7 @@ describe("deleteUser", () => {
       id: "user-id",
     });
 
-    await deleteUser("user-id");
+    await deleteUser("user-id", "admin-id");
 
     expect(deleteMock).toHaveBeenCalledWith({
       where: {
@@ -265,7 +308,9 @@ describe("deleteUser", () => {
 
     countMock.mockResolvedValue(1);
 
-    await expect(deleteUser("admin-id")).rejects.toMatchObject({
+    await expect(
+      deleteUser("admin-id", "another-admin-id")
+    ).rejects.toMatchObject({
       statusCode: 409,
       code: "LAST_ADMIN_REQUIRED",
     });
@@ -273,9 +318,26 @@ describe("deleteUser", () => {
     expect(deleteMock).not.toHaveBeenCalled();
   });
 
-  it("should allow deleting an ADMIN when another ADMIN exists", async () => {
+  it("should reject deleting the authenticated ADMIN's own account", async () => {
     findUniqueMock.mockResolvedValue({
-      id: "admin-id",
+      id: "admin-1",
+      name: "Admin",
+      email: "admin@example.com",
+      role: Role.ADMIN,
+    });
+
+    await expect(deleteUser("admin-1", "admin-1")).rejects.toMatchObject({
+      statusCode: 409,
+      code: "CANNOT_DELETE_SELF",
+    });
+
+    expect(countMock).not.toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("should allow deleting another ADMIN when multiple ADMINs exist", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "admin-2",
       name: "Admin",
       email: "admin@example.com",
       role: Role.ADMIN,
@@ -284,14 +346,14 @@ describe("deleteUser", () => {
     countMock.mockResolvedValue(2);
 
     deleteMock.mockResolvedValue({
-      id: "admin-id",
+      id: "admin-2",
     });
 
-    await deleteUser("admin-id");
+    await deleteUser("admin-2", "admin-1");
 
     expect(deleteMock).toHaveBeenCalledWith({
       where: {
-        id: "admin-id",
+        id: "admin-2",
       },
     });
   });
@@ -299,7 +361,9 @@ describe("deleteUser", () => {
   it("should return 404 when deleting a user that does not exist", async () => {
     findUniqueMock.mockResolvedValue(null);
 
-    await expect(deleteUser("missing-user-id")).rejects.toMatchObject({
+    await expect(
+      deleteUser("missing-user-id", "admin-id")
+    ).rejects.toMatchObject({
       statusCode: 404,
       code: "USER_NOT_FOUND",
     });

@@ -88,9 +88,7 @@ function TimeButtonGrid({
 }: TimeButtonGridProps) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-[#667085]">
-        {label}
-      </p>
+      <p className="text-xs font-semibold text-[#667085]">{label}</p>
 
       <div className={cn("grid gap-1.5", columns)}>
         {values.map((value) => {

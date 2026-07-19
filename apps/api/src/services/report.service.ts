@@ -21,6 +21,7 @@ export const getUsageReport = async () => {
         },
         select: {
           id: true,
+          userId: true,
           title: true,
           notes: true,
           startTime: true,

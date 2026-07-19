@@ -3,6 +3,7 @@ import type { AuthUser } from "./auth.api";
 
 export type Booking = {
   id: string;
+  userId: string;
   title: string;
   notes: string | null;
   startTime: string;

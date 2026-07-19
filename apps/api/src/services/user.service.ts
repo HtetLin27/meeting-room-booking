@@ -61,7 +61,8 @@ export const getAllUsers = async () => {
 
 export const updateUserRole = async (
   userId: string,
-  input: UpdateUserRoleInput
+  input: UpdateUserRoleInput,
+  currentUserId: string
 ) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -71,6 +72,14 @@ export const updateUserRole = async (
 
   if (!user) {
     throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  if (currentUserId === userId) {
+    throw new AppError(
+      409,
+      "CANNOT_CHANGE_OWN_ROLE",
+      "You cannot change your own role"
+    );
   }
 
   // Prevent changing the last ADMIN to another role
@@ -110,7 +119,7 @@ export const updateUserRole = async (
   return updatedUser;
 };
 
-export const deleteUser = async (userId: string) => {
+export const deleteUser = async (userId: string, currentUserId: string) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -119,6 +128,14 @@ export const deleteUser = async (userId: string) => {
 
   if (!user) {
     throw new AppError(404, "USER_NOT_FOUND", "User not found");
+  }
+
+  if (currentUserId === userId) {
+    throw new AppError(
+      409,
+      "CANNOT_DELETE_SELF",
+      "You cannot delete your own account"
+    );
   }
 
   // Prevent deleting the last ADMIN

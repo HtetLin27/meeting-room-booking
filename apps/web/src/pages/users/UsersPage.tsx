@@ -8,7 +8,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import {
-  currentUserQueryKey,
   currentUserQueryOptions,
   type AuthUser,
   type UserRole,
@@ -99,12 +98,14 @@ function RoleSelector({
   id,
   role,
   disabled,
+  title,
   className,
   onChange,
 }: {
   id?: string;
   role: UserRole;
   disabled: boolean;
+  title?: string;
   className?: string;
   onChange: (role: UserRole) => void;
 }) {
@@ -125,6 +126,7 @@ function RoleSelector({
         id={id}
         value={role}
         disabled={disabled}
+        title={title}
         onChange={(event) => onChange(event.target.value as UserRole)}
         className={cn(
           "h-9 w-full appearance-none rounded-full border py-0 pl-7 pr-8 text-sm font-medium outline-none transition focus:border-[#0355DD] focus:ring-2 focus:ring-[#0355DD]/10 disabled:cursor-not-allowed disabled:opacity-60",
@@ -201,7 +203,12 @@ function UsersTable({
                 <td className="px-6 py-4 align-middle">
                   <RoleSelector
                     role={user.role}
-                    disabled={isUpdatingRole}
+                    disabled={isUpdatingRole || isCurrentUser}
+                    title={
+                      isCurrentUser
+                        ? "You cannot change your own role"
+                        : undefined
+                    }
                     onChange={(role) => onRoleChange(user, role)}
                   />
                 </td>
@@ -217,7 +224,12 @@ function UsersTable({
                     type="button"
                     variant="outline"
                     size="icon"
-                    disabled={isDeleting}
+                    disabled={isDeleting || isCurrentUser}
+                    title={
+                      isCurrentUser
+                        ? "You cannot delete your own account"
+                        : undefined
+                    }
                     aria-label={`Delete ${user.name}`}
                     onClick={() => onDelete(user)}
                   >
@@ -289,7 +301,10 @@ function MobileUsersCards({
               <RoleSelector
                 id={`role-${user.id}`}
                 role={user.role}
-                disabled={isUpdatingRole}
+                disabled={isUpdatingRole || isCurrentUser}
+                title={
+                  isCurrentUser ? "You cannot change your own role" : undefined
+                }
                 className="w-full"
                 onChange={(role) => onRoleChange(user, role)}
               />
@@ -300,7 +315,12 @@ function MobileUsersCards({
                 type="button"
                 variant="outline"
                 className="border-[#E4E7EC] text-red-600 hover:bg-red-50"
-                disabled={isDeleting}
+                disabled={isDeleting || isCurrentUser}
+                title={
+                  isCurrentUser
+                    ? "You cannot delete your own account"
+                    : undefined
+                }
                 aria-label={`Delete ${user.name}`}
                 onClick={() => onDelete(user)}
               >
@@ -379,24 +399,10 @@ export function UsersPage() {
   const updateRoleMutation = useMutation({
     mutationFn: updateUserRole,
 
-    onSuccess: async (updatedUser) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["users"],
       });
-
-      /*
-       * If the logged-in Admin
-       * changes their own role,
-       * update the auth cache too.
-       */
-      if (updatedUser.id === currentUser?.id) {
-        queryClient.setQueryData(currentUserQueryKey, {
-          id: updatedUser.id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role,
-        });
-      }
 
       toast.success("User role updated");
     },
@@ -420,7 +426,7 @@ export function UsersPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
 
-    onSuccess: async (_, deletedUserId) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["users"],
       });
@@ -433,16 +439,6 @@ export function UsersPage() {
       await queryClient.invalidateQueries({
         queryKey: ["bookings"],
       });
-
-      /*
-       * Normally an Admin should avoid
-       * deleting their own account.
-       * If the backend allows it,
-       * clear auth state.
-       */
-      if (deletedUserId === currentUser?.id) {
-        queryClient.setQueryData(currentUserQueryKey, null);
-      }
 
       setUserToDelete(null);
       toast.success("User deleted successfully");
@@ -466,6 +462,10 @@ export function UsersPage() {
   };
 
   const handleRoleChange = (user: User, role: UserRole) => {
+    if (user.id === currentUser?.id) {
+      return;
+    }
+
     if (role === user.role) {
       return;
     }
@@ -477,6 +477,10 @@ export function UsersPage() {
   };
 
   const handleDelete = (user: User) => {
+    if (user.id === currentUser?.id) {
+      return;
+    }
+
     setUserToDelete(user);
   };
 

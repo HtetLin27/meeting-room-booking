@@ -3,6 +3,7 @@ import type { UserRole } from "./auth.api";
 
 export type ReportBooking = {
   id: string;
+  userId: string;
   title: string;
   notes: string | null;
   startTime: string;

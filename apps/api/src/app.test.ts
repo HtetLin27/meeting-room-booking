@@ -1,16 +1,28 @@
+import jwt from "jsonwebtoken";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { env } from "./config/env.js";
 import { AppError } from "./errors/app-error.js";
+import { Role } from "./generated/prisma/client.js";
 
-const { loginMock, getCurrentUserMock } = vi.hoisted(() => ({
+const { loginMock, getCurrentUserMock, findUniqueMock } = vi.hoisted(() => ({
   loginMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
+  findUniqueMock: vi.fn(),
 }));
 
 vi.mock("./services/auth.service.js", () => ({
   login: loginMock,
   getCurrentUser: getCurrentUserMock,
+}));
+
+vi.mock("./lib/prisma.js", () => ({
+  prisma: {
+    user: {
+      findUnique: findUniqueMock,
+    },
+  },
 }));
 
 import app from "./app.js";
@@ -124,5 +136,97 @@ describe("POST /api/auth/login", () => {
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
 
     expect(loginMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/auth/me", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return the current authenticated user", async () => {
+    const token = jwt.sign(
+      { id: "admin-id", role: Role.ADMIN },
+      env.JWT_SECRET
+    );
+
+    findUniqueMock.mockResolvedValue({
+      id: "admin-id",
+      role: Role.ADMIN,
+    });
+
+    getCurrentUserMock.mockResolvedValue({
+      user: {
+        id: "admin-id",
+        name: "Admin",
+        email: "admin@example.com",
+        role: Role.ADMIN,
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/auth/me")
+      .set("Cookie", [`token=${token}`])
+      .expect(200);
+
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: {
+        id: "admin-id",
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    expect(getCurrentUserMock).toHaveBeenCalledWith("admin-id");
+
+    expect(response.body).toEqual({
+      success: true,
+      message: "Current user retrieved successfully",
+      data: {
+        user: {
+          id: "admin-id",
+          name: "Admin",
+          email: "admin@example.com",
+          role: Role.ADMIN,
+        },
+      },
+    });
+  });
+});
+
+describe("POST /api/auth/logout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should logout successfully and clear the authentication cookie", async () => {
+    const response = await request(app).post("/api/auth/logout").expect(200);
+
+    expect(response.body).toEqual({
+      success: true,
+      message: "Logout successful",
+    });
+
+    const setCookieHeader = response.headers["set-cookie"];
+
+    expect(setCookieHeader).toBeDefined();
+
+    const cookies = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : [setCookieHeader];
+
+    const [firstCookie] = cookies;
+
+    if (typeof firstCookie !== "string") {
+      throw new Error(
+        "Expected set-cookie header to include at least one cookie"
+      );
+    }
+
+    expect(firstCookie).toContain("token=");
+    expect(firstCookie).toContain("Expires=Thu, 01 Jan 1970");
+    expect(getCurrentUserMock).not.toHaveBeenCalled();
   });
 });

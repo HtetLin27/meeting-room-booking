@@ -75,6 +75,7 @@ export const createBooking = async (
     },
     select: {
       id: true,
+      userId: true,
       title: true,
       notes: true,
       startTime: true,
@@ -101,6 +102,7 @@ export const getAllBookings = async () => {
     },
     select: {
       id: true,
+      userId: true,
       title: true,
       notes: true,
       startTime: true,
