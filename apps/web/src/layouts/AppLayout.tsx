@@ -14,7 +14,12 @@ import type { ComponentType } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { getCurrentUser, logout, type UserRole } from "@/api/auth.api";
+import {
+  currentUserQueryKey,
+  currentUserQueryOptions,
+  logout,
+  type UserRole,
+} from "@/api/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -78,17 +83,29 @@ export function AppLayout() {
     localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isSidebarExpanded));
   }, [isSidebarExpanded]);
 
-  const { data: user } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { data: user } = useQuery(currentUserQueryOptions);
 
   const logoutMutation = useMutation({
     mutationFn: logout,
 
-    onSuccess: () => {
-      queryClient.clear();
+    onSuccess: async () => {
+      await queryClient.cancelQueries({
+        queryKey: currentUserQueryKey,
+      });
+
+      queryClient.setQueryData(currentUserQueryKey, null);
+
+      queryClient.removeQueries({
+        queryKey: ["bookings"],
+      });
+
+      queryClient.removeQueries({
+        queryKey: ["users"],
+      });
+
+      queryClient.removeQueries({
+        queryKey: ["usage-report"],
+      });
 
       toast.success("Logged out successfully");
 

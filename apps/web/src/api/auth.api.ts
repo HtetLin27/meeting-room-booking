@@ -42,6 +42,15 @@ export const getCurrentUser = async () => {
   return response.data.data.user;
 };
 
+export const currentUserQueryKey = ["current-user"] as const;
+
+export const currentUserQueryOptions = {
+  queryKey: currentUserQueryKey,
+  queryFn: getCurrentUser,
+  retry: false,
+  staleTime: Infinity,
+} as const;
+
 export const logout = async () => {
   await apiClient.post("/auth/logout");
 };

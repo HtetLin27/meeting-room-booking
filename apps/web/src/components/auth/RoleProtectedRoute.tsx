@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet } from "react-router";
 
-import { getCurrentUser, type UserRole } from "@/api/auth.api";
+import { currentUserQueryOptions, type UserRole } from "@/api/auth.api";
 
 type RoleProtectedRouteProps = {
   allowedRoles: UserRole[];
@@ -13,9 +13,7 @@ export function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps) {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-    retry: false,
+    ...currentUserQueryOptions,
   });
 
   if (isLoading) {

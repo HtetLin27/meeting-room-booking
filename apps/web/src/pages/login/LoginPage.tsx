@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-import { login } from "@/api/auth.api";
+import { currentUserQueryKey, login } from "@/api/auth.api";
 import { loginSchema, type LoginFormValues } from "@/schemas/auth.schema";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export function LoginPage() {
     mutationFn: login,
 
     onSuccess: (user) => {
-      queryClient.setQueryData(["current-user"], user);
+      queryClient.setQueryData(currentUserQueryKey, user);
 
       toast.success("Login successful");
 

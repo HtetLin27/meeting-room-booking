@@ -7,7 +7,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { getCurrentUser, type AuthUser, type UserRole } from "@/api/auth.api";
+import {
+  currentUserQueryKey,
+  currentUserQueryOptions,
+  type AuthUser,
+  type UserRole,
+} from "@/api/auth.api";
 
 import {
   createUser,
@@ -330,11 +335,9 @@ export function UsersPage() {
     },
   });
 
-  const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery(
+    currentUserQueryOptions
+  );
 
   const {
     data: users = [],
@@ -385,7 +388,7 @@ export function UsersPage() {
        * update the auth cache too.
        */
       if (updatedUser.id === currentUser?.id) {
-        queryClient.setQueryData(["current-user"], {
+        queryClient.setQueryData(currentUserQueryKey, {
           id: updatedUser.id,
           name: updatedUser.name,
           email: updatedUser.email,
@@ -436,9 +439,7 @@ export function UsersPage() {
        * clear auth state.
        */
       if (deletedUserId === currentUser?.id) {
-        queryClient.removeQueries({
-          queryKey: ["current-user"],
-        });
+        queryClient.setQueryData(currentUserQueryKey, null);
       }
 
       toast.success("User deleted successfully");

@@ -6,6 +6,7 @@ import type { Booking } from "@/api/booking.api";
 export const START_HOUR = 8;
 export const END_HOUR = 24;
 export const HOUR_HEIGHT = 64;
+export const DEFAULT_BOOKING_DURATION_MINUTES = 60;
 
 // Available room capacity mirrors the visible calendar range: 7 days * 16 hours.
 export const AVAILABLE_WEEKLY_ROOM_MINUTES = 7 * (END_HOUR - START_HOUR) * 60;
@@ -69,6 +70,76 @@ export function formatDuration(minutes: number) {
   }
 
   return `${hours}h ${remainingMinutes.toString().padStart(2, "0")}m`;
+}
+
+function padDatePart(value: number) {
+  return value.toString().padStart(2, "0");
+}
+
+export function formatLocalDateValue(date: Date) {
+  return [
+    date.getFullYear(),
+    padDatePart(date.getMonth() + 1),
+    padDatePart(date.getDate()),
+  ].join("-");
+}
+
+export function formatLocalTimeValue(date: Date) {
+  return [
+    padDatePart(date.getHours()),
+    padDatePart(date.getMinutes()),
+  ].join(":");
+}
+
+export function formatLocalDateTimeValue(date: Date) {
+  return `${formatLocalDateValue(date)}T${formatLocalTimeValue(date)}`;
+}
+
+export function parseLocalDateValue(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+export function combineLocalDateAndTime(dateValue: string, timeValue: string) {
+  return `${dateValue}T${timeValue}`;
+}
+
+export function getDefaultBookingDateTimes(baseDate = new Date()) {
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  const selectedDay = new Date(
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate()
+  );
+  const startDate = new Date(selectedDay < today ? today : selectedDay);
+
+  if (startDate.getTime() === today.getTime()) {
+    const totalMinutes = now.getHours() * 60 + now.getMinutes();
+    const nextSlotMinutes = (Math.floor(totalMinutes / 30) + 1) * 30;
+
+    startDate.setHours(0, nextSlotMinutes, 0, 0);
+  } else {
+    startDate.setHours(9, 0, 0, 0);
+  }
+
+  const endDate = new Date(
+    startDate.getTime() + DEFAULT_BOOKING_DURATION_MINUTES * 60000
+  );
+
+  return {
+    startTime: formatLocalDateTimeValue(startDate),
+    endTime: formatLocalDateTimeValue(endDate),
+  };
 }
 
 export function bookingOverlapsRange(

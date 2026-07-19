@@ -13,7 +13,7 @@ import {
   getBookings,
   type Booking,
 } from "@/api/booking.api";
-import { getCurrentUser } from "@/api/auth.api";
+import { currentUserQueryOptions } from "@/api/auth.api";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -35,6 +35,7 @@ import {
 } from "@/schemas/booking.schema";
 import {
   formatDuration,
+  getDefaultBookingDateTimes,
   getDurationMinutes,
   getUpcomingBookings,
   getWeekBookings,
@@ -97,6 +98,7 @@ export function BookingsPage() {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<CreateBookingFormValues>({
     resolver: standardSchemaResolver(createBookingFormSchema),
@@ -131,11 +133,9 @@ export function BookingsPage() {
     return formatDuration(minutes);
   }, [startTimeValue, endTimeValue]);
 
-  const { data: currentUser, isLoading: userLoading } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { data: currentUser, isLoading: userLoading } = useQuery(
+    currentUserQueryOptions
+  );
 
   const {
     data: bookings = [],
@@ -209,6 +209,16 @@ export function BookingsPage() {
     });
   };
 
+  const handleOpenCreateBooking = (baseDate = new Date()) => {
+    reset({
+      title: "",
+      notes: "",
+      ...getDefaultBookingDateTimes(baseDate),
+    });
+    setCreateErrorMessage(null);
+    setNewBookingOpen(true);
+  };
+
   const handleDelete = (booking: Booking) => {
     const confirmed = window.confirm(`Delete "${booking.title}"?`);
 
@@ -268,10 +278,7 @@ export function BookingsPage() {
           <Button
             type="button"
             className="hidden h-9 bg-[#0355DD] px-4 text-white hover:bg-[#0248BD] lg:inline-flex"
-            onClick={() => {
-              setCreateErrorMessage(null);
-              setNewBookingOpen(true);
-            }}
+            onClick={() => handleOpenCreateBooking()}
           >
             <Plus className="size-4" />
             New Booking
@@ -325,10 +332,7 @@ export function BookingsPage() {
         size="icon"
         className="fixed bottom-6 right-5 z-40 size-14 rounded-full bg-[#0355DD] text-white shadow-lg hover:bg-[#0248BD] lg:hidden"
         aria-label="New booking"
-        onClick={() => {
-          setCreateErrorMessage(null);
-          setNewBookingOpen(true);
-        }}
+        onClick={() => handleOpenCreateBooking(mobileSelectedDate)}
       >
         <Plus className="size-6" />
       </Button>
@@ -367,8 +371,11 @@ export function BookingsPage() {
             errors={errors}
             isSubmitting={createMutation.isPending}
             register={register}
+            setValue={setValue}
             handleSubmit={handleSubmit}
             selectedDuration={selectedDuration}
+            startTimeValue={startTimeValue ?? ""}
+            endTimeValue={endTimeValue ?? ""}
             serverError={createErrorMessage}
             onCancel={handleCancelCreate}
             onSubmit={onSubmit}

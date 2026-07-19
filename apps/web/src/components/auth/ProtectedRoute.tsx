@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet } from "react-router";
 
-import { getCurrentUser } from "@/api/auth.api";
+import { currentUserQueryOptions } from "@/api/auth.api";
 
 export function ProtectedRoute() {
   const {
@@ -9,9 +9,7 @@ export function ProtectedRoute() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["current-user"],
-    queryFn: getCurrentUser,
-    retry: false,
+    ...currentUserQueryOptions,
   });
 
   if (isLoading) {
