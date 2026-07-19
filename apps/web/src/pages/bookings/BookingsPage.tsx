@@ -14,6 +14,7 @@ import {
   type Booking,
 } from "@/api/booking.api";
 import { currentUserQueryOptions } from "@/api/auth.api";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -67,6 +68,7 @@ export function BookingsPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [mobileSelectedDate, setMobileSelectedDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
   const [newBookingOpen, setNewBookingOpen] = useState(false);
   const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(
     null
@@ -176,6 +178,8 @@ export function BookingsPage() {
         queryKey: ["bookings"],
       });
 
+      setBookingToDelete(null);
+      setSelectedBooking(null);
       toast.success("Booking deleted successfully");
     },
 
@@ -220,15 +224,15 @@ export function BookingsPage() {
   };
 
   const handleDelete = (booking: Booking) => {
-    const confirmed = window.confirm(`Delete "${booking.title}"?`);
+    setBookingToDelete(booking);
+  };
 
-    if (!confirmed) {
-      return false;
+  const handleConfirmDelete = () => {
+    if (!bookingToDelete) {
+      return;
     }
 
-    deleteMutation.mutate(booking.id);
-
-    return true;
+    deleteMutation.mutate(bookingToDelete.id);
   };
 
   const handleCancelCreate = () => {
@@ -346,11 +350,25 @@ export function BookingsPage() {
             setSelectedBooking(null);
           }
         }}
-        onDelete={(booking) => {
-          if (handleDelete(booking)) {
-            setSelectedBooking(null);
+        onDelete={handleDelete}
+      />
+
+      <ConfirmDeleteDialog
+        open={Boolean(bookingToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setBookingToDelete(null);
           }
         }}
+        title="Delete booking?"
+        description={
+          bookingToDelete
+            ? `Are you sure you want to delete "${bookingToDelete.title}"?\nThis action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete Booking"
+        isPending={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
       />
 
       <Sheet open={newBookingOpen} onOpenChange={handleSheetOpenChange}>

@@ -27,6 +27,7 @@ import {
   type CreateUserFormValues,
 } from "@/schemas/user.schema";
 
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -318,6 +319,7 @@ export function UsersPage() {
   const queryClient = useQueryClient();
 
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const {
     register,
@@ -442,6 +444,7 @@ export function UsersPage() {
         queryClient.setQueryData(currentUserQueryKey, null);
       }
 
+      setUserToDelete(null);
       toast.success("User deleted successfully");
     },
 
@@ -474,15 +477,15 @@ export function UsersPage() {
   };
 
   const handleDelete = (user: User) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${user.name}"?\n\nTheir bookings will also be deleted.`
-    );
+    setUserToDelete(user);
+  };
 
-    if (!confirmed) {
+  const handleConfirmDelete = () => {
+    if (!userToDelete) {
       return;
     }
 
-    deleteMutation.mutate(user.id);
+    deleteMutation.mutate(userToDelete.id);
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -692,6 +695,24 @@ export function UsersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDeleteDialog
+        open={Boolean(userToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUserToDelete(null);
+          }
+        }}
+        title="Delete user?"
+        description={
+          userToDelete
+            ? `Are you sure you want to delete "${userToDelete.name}"?\nAll bookings created by this user will also be deleted.\nThis action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete User"
+        isPending={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }

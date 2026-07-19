@@ -8,11 +8,9 @@ This project was built as a coding test.
 
 | Service      | URL                                                       |
 | ------------ | --------------------------------------------------------- |
-| Frontend     | `<FRONTEND_LIVE_URL>`                                     |
+| Frontend     | https://meeting-room-booking-web.onrender.com             |
 | API          | https://meeting-room-booking-api-x068.onrender.com        |
-| Health check | https://meeting-room-booking-api-x068.onrender.com/health |
-
-Replace `<FRONTEND_LIVE_URL>` with the deployed Render Static Site URL. The exact frontend production URL is not present in this repository.
+| Health Check | https://meeting-room-booking-api-x068.onrender.com/health |
 
 ## Demo Accounts
 
